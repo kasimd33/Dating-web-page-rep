@@ -1,0 +1,115 @@
+{
+  "project_name": "AgentCupid - Agentic Dating & Compatibility Theater",
+  "theme": {
+    "archetype": "LUXURY_KINETIC_CYBER_ROMANCE",
+    "mode": "dark_default_with_light_toggle",
+    "color_palette": {
+      "dark": {
+        "background": "#090D16",
+        "surface": "#121826",
+        "surface_border": "rgba(255, 255, 255, 0.08)",
+        "card_bg": "#161F33",
+        "primary_accent": "#E11D48",
+        "secondary_accent": "#F3D085",
+        "teal_glow": "#06B6D4",
+        "text_primary": "#F8FAFC",
+        "text_secondary": "#94A3B8",
+        "text_muted": "#64748B",
+        "linkedin_blue": "#0A66C2",
+        "instagram_pink": "#E1306C"
+      },
+      "light": {
+        "background": "#FDFBF7",
+        "surface": "#FFFFFF",
+        "surface_border": "#E2E8F0",
+        "card_bg": "#F8FAFC",
+        "primary_accent": "#E11D48",
+        "secondary_accent": "#B45309",
+        "teal_glow": "#0891B2",
+        "text_primary": "#0F172A",
+        "text_secondary": "#475569",
+        "text_muted": "#94A3B8"
+      }
+    }
+  },
+  "typography": {
+    "heading_font": "Cormorant Garamond, Playfair Display, serif",
+    "body_font": "Plus Jakarta Sans, Outfit, sans-serif",
+    "mono_font": "JetBrains Mono, monospace",
+    "rules": {
+      "h1": "text-4xl sm:text-5xl lg:text-6xl font-serif tracking-tight font-bold",
+      "h2": "text-2xl sm:text-3xl lg:text-4xl font-serif tracking-tight font-semibold",
+      "h3": "text-xl sm:text-2xl font-sans font-semibold tracking-normal",
+      "label": "text-xs font-mono uppercase tracking-[0.2em] text-muted-foreground",
+      "subtitle": "text-lg text-muted-foreground max-w-2xl font-light leading-relaxed"
+    }
+  },
+  "layout_and_spacing": {
+    "container_padding": "px-4 sm:px-8 lg:px-12 py-8 sm:py-12",
+    "bento_grid": "grid grid-cols-1 md:grid-cols-8 lg:grid-cols-12 gap-6 lg:gap-8",
+    "card_padding": "p-6 sm:p-8",
+    "hero_overlay": "bg-gradient-to-t from-[#090D16] via-[#090D16]/60 to-transparent",
+    "border_radius": "rounded-2xl"
+  },
+  "components_strategy": {
+    "header_nav": "Crystal Glassmorphism (backdrop-blur-xl bg-slate-950/80 border-b border-white/10 z-50 fixed top-0 left-0 right-0)",
+    "add_person_form": "Floating Modal / Hero card with paste input for LinkedIn & Instagram URLs, live agent analysis parser, and quick-add preloaded candidates",
+    "profile_card_view": "Editorial Bento layout displaying LinkedIn professional attributes, Instagram lifestyle highlights, synthesized Needs, Hobbies, Interests, and Agent Personality Radar",
+    "agent_dating_theater": "Interactive live-simulation stage featuring turn-by-turn agent dialog, romantic venue backdrops, real-time chemistry meter (0-100%), interest overlap sparks, and final match verdict",
+    "ranked_compatibility_matrix": "Interactive sorting and leaderboard grid ranking top matches for any selected candidate with granular compatibility breakdowns",
+    "source_badges": "High-contrast LinkedIn & Instagram authenticity verification badges with direct profile link triggers"
+  },
+  "image_urls": {
+    "avatars": [
+      {
+        "url": "https://images.unsplash.com/photo-1685903772095-f07172808761?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzMjV8MHwxfHNlYXJjaHw0fHxwb3J0cmFpdCUyMHByb2Zlc3Npb25hbCUyMHBvcnRyYWl0JTIwYWVzdGhldGljJTIwbGlmZXN0eWxlJTIwYXZhdGFyfGVufDB8fHx8MTc5MTg4MzQ0Nnww&ixlib=rb-4.1.0&q=85",
+        "description": "Female candidate portrait - Elegant executive/designer"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1641288883869-c463bc6c2a58?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzMjV8MHwxfHNlYXJjaHxfHxwb3J0cmFpdCUyMHByb2Zlc3Npb25hbCUyMHBvcnRyYWl0JTIwYWVzdGhldGljJTIwbGlmZXN0eWxlJTIwYXZhdGFyfGVufDB8fHx8MTc5MTg4MzQ0Nnww&ixlib=rb-4.1.0&q=85",
+        "description": "Male candidate portrait - Creative tech entrepreneur"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1586297135537-94bc9ba060aa?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzMjV8MHwxfHNlYXJjaHwyfHxwb3J0cmFpdCUyMHByb2Zlc3Npb25hbCUyMHBvcnRyYWl0JTIwYWVzdGhldGljJTIwbGlmZXN0eWxlJTIwYXZhdGFyfGVufDB8fHx8MTc5MTg4MzQ0Nnww&ixlib=rb-4.1.0&q=85",
+        "description": "Female candidate portrait - Architectural designer"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1569913486515-b74bf7751574?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzMjV8MHwxfHNlYXJjaHwzfHxwb3J0cmFpdCUyMHByb2Zlc3Npb25hbCUyMHBvcnRyYWl0JTIwYWVzdGhldGljJTIwbGlmZXN0eWxlJTIwYXZhdGFyfGVufDB8fHx8MTc5MTg4MzQ0Nnww&ixlib=rb-4.1.0&q=85",
+        "description": "Female candidate portrait - Outdoor & wellness founder"
+      }
+    ],
+    "date_venues": [
+      {
+        "url": "https://images.unsplash.com/photo-1600093463592-8e36ae95ef56?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2NzB8MHwxfHNlYXJjaHwxfHxyb21hbnRpYyUyMGRhdGUlMjByZXN0YXVyYW50JTIwY29mZmVlJTIwc2hvcCUyMGNvenklMjBpbnRlcmlvciUyMGFyY2hpdGVjdHVyZXxlbnwwfHx8fDE3OTE4ODM0NDZ8MA&ixlib=rb-4.1.0&q=85",
+        "name": "Botanical Artisanal Cafe",
+        "tag": "Cozy & Conversational"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1551887196-72e32bfc7bf3?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2NzB8MHwxfHNlYXJjaHwyfHxyb21hbnRpYyUyMGRhdGUlMjByZXN0YXVyYW50JTIwY29mZmVlJTIwc2hvcCUyMGNvenklMjBpbnRlcmlvciUyMGFyY2hpdGVjdHVyZXxlbnwwfHx8fDE3OTE4ODM0NDZ8MA&ixlib=rb-4.1.0&q=85",
+        "name": "Velvet & Amber Speakeasy",
+        "tag": "Moody & Sophisticated"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1590741861173-85035e8af62c?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2NzB8MHwxfHNlYXJjaHw0fHxyb21hbnRpYyUyMGRhdGUlMjByZXN0YXVyYW50JTIwY29mZmVlJTIwc2hvcCUyMGNvenklMjBpbnRlcmlvciUyMGFyY2hpdGVjdHVyZXxlbnwwfHx8fDE3OTE4ODM0NDZ8MA&ixlib=rb-4.1.0&q=85",
+        "name": "Le Ciel Parisian Bistro",
+        "tag": "Classic Romantic"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1564849744694-348ecd00c279?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2NzB8MHwxfHNlYXJjaHwzfHxyb21hbnRpYyUyMGRhdGUlMjByZXN0YXVyYW50JTIwY29mZmVlJTIwc2hvcCUyMGNvenklMjBpbnRlcmlvciUyMGFyY2hpdGVjdHVyZXxlbnwwfHx8fDE3OTE4ODM0NDZ8MA&ixlib=rb-4.1.0&q=85",
+        "name": "Glasshouse Atrium Lounge",
+        "tag": "Luminous & Serene"
+      }
+    ]
+  },
+  "testing_requirements": {
+    "data_testid_rules": "All interactive elements, buttons, inputs, tabs, candidate cards, date controls, and ranking tables MUST contain explicit data-testid attributes formatted in kebab-case."
+  },
+  "UNIVERSAL GUIDELINES FOR MAIN AGENT": [
+    "Ensure at least 25 distinct pre-loaded/seeded real candidate profiles are accessible and selectable with valid-looking LinkedIn and public Instagram URLs.",
+    "Implement the full agent pipeline: URL submission -> Simulated Dual-Source Scrape -> Agent Persona Synthesis -> Needs/Hobbies/Interests display -> Interactive Dating Theater -> Compatibility Ranking Matrix.",
+    "Never leave background transparent without backdrop filters on sticky or overlay containers.",
+    "Do not use generic Inter font for main headings; use Cormorant Garamond / Playfair Display.",
+    "Include data-testid on every button, link, tab, card, and interactive element."
+  ]
+},
+overwrite:true,path:

@@ -1,0 +1,86 @@
+{
+  "passed": 9,
+  "failed": 0,
+  "bugs": [],
+  "action_items": [],
+  "retest_needed": true,
+  "checks": [
+    {
+      "criterion": "The main dashboard exposes at least 25 distinct people/agents, and each profile has exactly two source links",
+      "name": "people-profile-sources",
+      "lane": "backend",
+      "status": "passed",
+      "evidence": "GET /api/agents returned 200; response contained at least 25 people and each checked person had LinkedIn and Instagram URLs."
+    },
+    {
+      "criterion": "The main dashboard exposes at least 25 distinct people/agents, and each profile has exactly two source links",
+      "name": "people-profile-sources",
+      "lane": "browser",
+      "status": "flaky",
+      "evidence": "Initial count assertion expected 28 but live UI had 33 cards; corrected rerun passed with >=25, seed-01/seed-25 visible, profile showed LinkedIn, Instagram, and 2 / 2 sources read."
+    },
+    {
+      "criterion": "A user can add a person by submitting a name, official LinkedIn URL, and public Instagram URL",
+      "name": "add-person-opens-profile",
+      "lane": "backend",
+      "status": "passed",
+      "evidence": "POST /api/agents/analyze returned 200 for a unique fixture; returned analyzed candidate persisted and GET /api/agents/{id} returned 200."
+    },
+    {
+      "criterion": "A user can add a person by submitting a name, official LinkedIn URL, and public Instagram URL",
+      "name": "add-person-opens-profile",
+      "lane": "browser",
+      "status": "passed",
+      "evidence": "UI form accepted unique name plus both URLs; submit opened profile modal with matching name and 2 / 2 sources read."
+    },
+    {
+      "criterion": "The agent analysis is visible on a profile page",
+      "name": "profile-agent-analysis",
+      "lane": "backend",
+      "status": "passed",
+      "evidence": "POST /api/agents/analyze returned 200 with non-empty agent_style, needs, hobbies, interests, and qualities."
+    },
+    {
+      "criterion": "The agent analysis is visible on a profile page",
+      "name": "profile-agent-analysis",
+      "lane": "browser",
+      "status": "passed",
+      "evidence": "Profile modal visibly rendered agent first read and three tags in each Needs, Hobbies, Interests, and Qualities found section."
+    },
+    {
+      "criterion": "Every person gets a compatibility ranking",
+      "name": "compatibility-ranks-matches",
+      "lane": "backend",
+      "status": "passed",
+      "evidence": "GET /api/agents/{id}/rankings returned 200 with ranked matches, integer scores, reasons, and different candidate IDs."
+    },
+    {
+      "criterion": "Every person gets a compatibility ranking",
+      "name": "compatibility-ranks-matches",
+      "lane": "browser",
+      "status": "passed",
+      "evidence": "Compatibility view rendered 10 ranked rows with numeric score, reason, Profile action, Date their agent action, and person selector changed target."
+    },
+    {
+      "criterion": "Agents actually date on behalf of people",
+      "name": "date-theater-reciprocal-verdict",
+      "lane": "backend",
+      "status": "passed",
+      "evidence": "POST /api/agents/dates returned 200 with non-zero chemistry, six dialogue/system turns, agent turns, and verdict."
+    },
+    {
+      "criterion": "Agents actually date on behalf of people",
+      "name": "date-theater-reciprocal-verdict",
+      "lane": "browser",
+      "status": "passed",
+      "evidence": "Starting a ranked date opened Date theater; advancing all beats changed chemistry and ended with reciprocal second-date verdict."
+    },
+    {
+      "criterion": "The dashboard remains navigable across the full product flow",
+      "name": "dashboard-navigation-controls",
+      "lane": "browser",
+      "status": "flaky",
+      "evidence": "Initial check expected date-theater-view while empty state correctly uses date-empty; corrected rerun passed through Control room, People & agents, Compatibility, and Date theater on public preview URL."
+    }
+  ]
+}
