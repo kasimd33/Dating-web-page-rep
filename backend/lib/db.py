@@ -24,6 +24,11 @@ INDEXES: dict[str, list[IndexModel]] = {
         IndexModel([("created_at", ASCENDING)], name="candidate_created"),
         IndexModel([("linkedin_url", ASCENDING)], name="candidate_linkedin", unique=True),
     ],
+    "dates": [
+        IndexModel([("id", ASCENDING)], name="date_id", unique=True),
+        IndexModel([("candidate_id", ASCENDING), ("created_at", DESCENDING)], name="date_candidate_created"),
+        IndexModel([("match_id", ASCENDING), ("created_at", DESCENDING)], name="date_match_created"),
+    ],
 }
 
 

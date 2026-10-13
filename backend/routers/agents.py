@@ -1,22 +1,35 @@
-from fastapi import APIRouter, HTTPException
+import json
+import logging
+from datetime import timezone
 
+from fastapi import APIRouter, HTTPException
+from fastapi.responses import StreamingResponse
+
+from lib.date_engine import profile_score, run_date
 from lib.db import db
 from lib.seed_data import AVATARS
 from models.agent import (
     AgentCandidate,
     AgentCandidateCreate,
-    DateSession,
+    DateRecord,
     DateSessionCreate,
-    DateTurn,
     RankedMatch,
 )
 
 router = APIRouter(prefix="/agents", tags=["agents"])
+logger = logging.getLogger(__name__)
 
 
 def _candidate(doc: dict) -> AgentCandidate:
     doc.pop("_id", None)
     return AgentCandidate(**doc)
+
+
+def _date(doc: dict) -> DateRecord:
+    doc.pop("_id", None)
+    if doc.get("created_at") and doc["created_at"].tzinfo is None:
+        doc["created_at"] = doc["created_at"].replace(tzinfo=timezone.utc)
+    return DateRecord(**doc)
 
 
 async def _get_candidate(candidate_id: str) -> AgentCandidate:
@@ -28,13 +41,8 @@ async def _get_candidate(candidate_id: str) -> AgentCandidate:
 
 @router.get("", response_model=list[AgentCandidate])
 async def list_candidates():
-    docs = await db.candidates.find().sort("created_at", 1).to_list(100)
+    docs = await db.candidates.find().sort("created_at", 1).to_list(200)
     return [_candidate(doc) for doc in docs]
-
-
-@router.get("/{candidate_id}", response_model=AgentCandidate)
-async def get_candidate(candidate_id: str):
-    return await _get_candidate(candidate_id)
 
 
 @router.post("/analyze", response_model=AgentCandidate)
@@ -63,54 +71,90 @@ async def analyze_candidate(payload: AgentCandidateCreate):
     return record
 
 
+@router.get("/dates/{date_id}", response_model=DateRecord)
+async def get_date(date_id: str):
+    doc = await db.dates.find_one({"id": date_id})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Date not found")
+    return _date(doc)
+
+
+@router.get("/{candidate_id}", response_model=AgentCandidate)
+async def get_candidate(candidate_id: str):
+    return await _get_candidate(candidate_id)
+
+
 @router.get("/{candidate_id}/rankings", response_model=list[RankedMatch])
 async def rank_candidates(candidate_id: str):
     target = await _get_candidate(candidate_id)
-    docs = await db.candidates.find({"id": {"$ne": candidate_id}}).to_list(100)
+    docs = await db.candidates.find({"id": {"$ne": candidate_id}}).to_list(200)
+
+    # Latest completed date per partner, whichever side started it.
+    latest: dict[str, dict] = {}
+    date_docs = await db.dates.find(
+        {"$or": [{"candidate_id": candidate_id}, {"match_id": candidate_id}]}
+    ).sort("created_at", -1).to_list(500)
+    for d in date_docs:
+        partner = d["match_id"] if d["candidate_id"] == candidate_id else d["candidate_id"]
+        latest.setdefault(partner, d)
+
     matches = []
     for doc in docs:
         candidate = _candidate(doc)
-        overlap = len(set(target.interests) & set(candidate.interests))
-        score = 72 + ((sum(ord(char) for char in target.id + candidate.id) + overlap * 7) % 26)
-        breakdown = {
-            "values": min(98, score + (overlap * 2)),
-            "energy": min(97, score - 2 + (len(candidate.hobbies) % 3)),
-            "curiosity": min(99, score + 3),
-        }
-        common_interest = candidate.interests[overlap % len(candidate.interests)]
+        fit = profile_score(target, candidate)
+        dated = latest.get(candidate.id)
+        if dated:
+            mine, theirs = (
+                (dated["candidate_agent_score"], dated["match_agent_score"])
+                if dated["candidate_id"] == candidate_id
+                else (dated["match_agent_score"], dated["candidate_agent_score"])
+            )
+            reason = f"Agents dated at {dated['venue']}: {dated['verdict'].lower()}."
+            breakdown = {"profile_fit": fit, "your_agent": mine, "their_agent": theirs}
+        else:
+            shared = set(target.interests + target.hobbies) & set(candidate.interests + candidate.hobbies)
+            hook = next(iter(shared), candidate.interests[0])
+            reason = f"Profile fit only — their {hook} signal pairs with {target.name}'s needs. Send the agents on a date."
+            breakdown = {"profile_fit": fit}
         matches.append(
             RankedMatch(
                 rank=0,
                 candidate=candidate,
-                score=score,
-                reason=f"Their {common_interest} signal pairs with {target.name}'s instinct for intention.",
+                score=dated["match_percent"] if dated else fit,
+                profile_score=fit,
+                date_match=dated["match_percent"] if dated else None,
+                date_id=dated["id"] if dated else None,
+                reason=reason,
                 breakdown=breakdown,
             )
         )
-    matches.sort(key=lambda item: item.score, reverse=True)
-    return [item.model_copy(update={"rank": index + 1}) for index, item in enumerate(matches[:10])]
+    # Agent-verified matches (they actually dated) rank above profile-fit guesses.
+    matches.sort(key=lambda item: (item.date_match is not None, item.score), reverse=True)
+    return [item.model_copy(update={"rank": index + 1}) for index, item in enumerate(matches)]
 
 
-@router.post("/dates", response_model=DateSession)
-async def start_date(payload: DateSessionCreate):
-    candidate = await _get_candidate(payload.candidate_id)
-    match = await _get_candidate(payload.match_id)
-    shared = next((item for item in candidate.interests if item in match.interests), "building a life with intention")
-    turns = [
-        DateTurn(speaker="Venue", role="system", message="The Botanical Artisanal Cafe · two agents, no humans at the table yet.", chemistry_delta=0),
-        DateTurn(speaker=candidate.name + "'s agent", role="agent", message=f"I noticed {candidate.name} values {candidate.needs[0]}. What does a good week feel like to you?", chemistry_delta=7),
-        DateTurn(speaker=match.name + "'s agent", role="agent", message=f"A week with {shared}, one surprising plan, and enough quiet to come back to myself.", chemistry_delta=9),
-        DateTurn(speaker=candidate.name + "'s agent", role="agent", message="That lands. My human needs someone who can make ambition feel like a shared adventure, not a performance.", chemistry_delta=8),
-        DateTurn(speaker=match.name + "'s agent", role="agent", message=f"Then there is a signal here. I would ask them to meet over {match.hobbies[0]} and see what stays easy.", chemistry_delta=11),
-        DateTurn(speaker="Chemistry engine", role="system", message="Both agents have requested a second date. The match is reciprocal.", chemistry_delta=0),
-    ]
-    chemistry = min(98, sum(turn.chemistry_delta for turn in turns))
-    return DateSession(
-        candidate=candidate,
-        match=match,
-        venue="Botanical Artisanal Cafe",
-        venue_tag="COZY · CONVERSATIONAL",
-        chemistry=chemistry,
-        verdict="Second date recommended",
-        turns=turns,
+@router.post("/dates/stream")
+async def stream_date(payload: DateSessionCreate):
+    """Server-sent events: start → (turn_start, delta*, turn_end)×N → judging → verdict."""
+    if payload.candidate_id == payload.match_id:
+        raise HTTPException(status_code=422, detail="An agent cannot date itself")
+    a = await _get_candidate(payload.candidate_id)
+    b = await _get_candidate(payload.match_id)
+
+    async def events():
+        try:
+            async for event in run_date(a, b):
+                if event["type"] == "verdict":
+                    record = DateRecord(**event["record"])
+                    await db.dates.insert_one(record.model_dump())
+                    event = {"type": "verdict", "record": record.model_dump(mode="json")}
+                yield f"data: {json.dumps(event)}\n\n"
+        except Exception as exc:  # surface failures to the client instead of a silent hang
+            logger.exception("date stream failed")
+            yield f"data: {json.dumps({'type': 'error', 'message': str(exc)[:200]})}\n\n"
+
+    return StreamingResponse(
+        events(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
     )

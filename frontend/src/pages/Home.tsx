@@ -25,13 +25,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { apiGet, apiPost } from "@/lib/api";
-import type {
-  AgentCandidate,
-  AgentCandidateCreate,
-  DateSession,
-  DateSessionCreate,
-  RankedMatch,
-} from "@/lib/agent-types";
+import type { AgentCandidate, AgentCandidateCreate, RankedMatch } from "@/lib/agent-types";
+import DateTheater from "@/components/DateTheater";
+import { useAgentDate } from "@/hooks/useAgentDate";
 
 type View = "overview" | "agents" | "rankings" | "date";
 
@@ -84,32 +80,15 @@ function fallbackRankings(target: AgentCandidate): RankedMatch[] {
         rank: index + 1,
         candidate,
         score,
+        profile_score: score,
+        date_match: null,
+        date_id: null,
         reason: `Their creative energy pairs with ${target.name}'s instinct for intention.`,
-        breakdown: { values: score + 2, energy: score - 1, curiosity: score + 4 },
+        breakdown: { profile_fit: score },
       };
     })
     .sort((a, b) => b.score - a.score)
     .map((item, index) => ({ ...item, rank: index + 1 }));
-}
-
-function makeLocalDateSession(first: AgentCandidate, second: AgentCandidate): DateSession {
-  return {
-    id: `local-date-${first.id}-${second.id}`,
-    candidate: first,
-    match: second,
-    venue: "Botanical Artisanal Cafe",
-    venue_tag: "COZY · CONVERSATIONAL",
-    chemistry: 35,
-    verdict: "Second date recommended",
-    turns: [
-      { speaker: "Venue", role: "system", message: "The Botanical Artisanal Cafe · two agents, no humans at the table yet.", chemistry_delta: 0 },
-      { speaker: `${first.name}'s agent`, role: "agent", message: `I noticed ${first.name} values ${first.needs[0]}. What does a good week feel like to you?`, chemistry_delta: 7 },
-      { speaker: `${second.name}'s agent`, role: "agent", message: `A week with ${second.interests[0]}, one surprising plan, and enough quiet to come back to myself.`, chemistry_delta: 9 },
-      { speaker: `${first.name}'s agent`, role: "agent", message: "That lands. My human needs someone who can make ambition feel like a shared adventure, not a performance.", chemistry_delta: 8 },
-      { speaker: `${second.name}'s agent`, role: "agent", message: `Then there is a signal here. I would ask them to meet over ${second.hobbies[0]} and see what stays easy.`, chemistry_delta: 11 },
-      { speaker: "Chemistry engine", role: "system", message: "Both agents have requested a second date. The match is reciprocal.", chemistry_delta: 0 },
-    ],
-  };
 }
 
 function SourceBadge({ type, href }: { type: "linkedin" | "instagram"; href: string }) {
@@ -302,15 +281,8 @@ function AgentsView({ candidates, onOpen, onAdd }: { candidates: AgentCandidate[
   return <div className="view-stack" data-testid="agents-view"><section className="page-heading" data-testid="agents-heading"><div><div className="eyebrow">THE AGENT ROSTER</div><h1 data-testid="agents-title">People & agents</h1><p data-testid="agents-copy">Every dossier is a two-source read. Open a profile to see what the agent found.</p></div><Button onClick={onAdd} className="primary-action" data-testid="agents-add-person-button"><Plus size={16} /> Add a person</Button></section><div className="agents-grid" data-testid="agents-grid">{candidates.map((candidate) => <CandidateCard key={candidate.id} candidate={candidate} onOpen={onOpen} />)}</div></div>;
 }
 
-function RankingsView({ candidates, selected, setSelected, rankings, onDate, onOpen }: { candidates: AgentCandidate[]; selected: AgentCandidate; setSelected: (id: string) => void; rankings: RankedMatch[]; onDate: (match: AgentCandidate) => void; onOpen: (candidate: AgentCandidate) => void }) {
-  return <div className="view-stack" data-testid="rankings-view"><section className="page-heading" data-testid="rankings-heading"><div><div className="eyebrow">THE COMPATIBILITY INDEX</div><h1 data-testid="rankings-title">Who fits {selected.name}?</h1><p data-testid="rankings-copy">The agents compare needs, energy, and curiosity — never popularity.</p></div><div className="select-wrap"><label htmlFor="ranking-person" className="micro-label">RANK FOR</label><select id="ranking-person" value={selected.id} onChange={(event) => setSelected(event.target.value)} data-testid="ranking-person-select">{candidates.map((candidate) => <option key={candidate.id} value={candidate.id}>{candidate.name}</option>)}</select></div></section><div className="ranking-intro" data-testid="ranking-intro"><Sparkles size={18} /><span><strong>{rankings.length || 8} signals compared.</strong> The top connection is a starting point, not a verdict.</span><Badge variant="outline" data-testid="ranking-method-badge">AGENT METHOD · V1</Badge></div><div className="ranking-list" data-testid="ranking-list">{rankings.map((match) => <div className={`ranking-row ${match.rank === 1 ? "ranking-top" : ""}`} key={match.candidate.id} data-testid={`ranking-row-${match.rank}`}><div className="rank-number" data-testid={`ranking-number-${match.rank}`}>{String(match.rank).padStart(2, "0")}</div><CandidateAvatar candidate={match.candidate} size="sm" /><div className="ranking-person"><strong data-testid={`ranking-name-${match.rank}`}>{match.candidate.name}</strong><span data-testid={`ranking-role-${match.rank}`}>{match.candidate.role}</span><small data-testid={`ranking-reason-${match.rank}`}>{match.reason}</small></div><div className="score-block"><strong data-testid={`ranking-score-${match.rank}`}>{match.score}%</strong><span>MATCH</span></div><div className="ranking-actions"><button type="button" onClick={() => onOpen(match.candidate)} className="row-link" data-testid={`ranking-profile-button-${match.rank}`}>Profile</button><Button onClick={() => onDate(match.candidate)} className="date-button" data-testid={`ranking-date-button-${match.rank}`}><Heart size={14} /> Date their agent</Button></div></div>)}</div></div>;
-}
-
-function DateTheater({ session, step, setStep, onBrowse }: { session: DateSession | null; step: number; setStep: (step: number) => void; onBrowse: () => void }) {
-  if (!session) return <div className="date-empty" data-testid="date-empty"><div className="empty-icon"><MessageCircle size={22} /></div><div className="eyebrow">DATE THEATER</div><h1 data-testid="date-empty-title">No date on stage yet.</h1><p data-testid="date-empty-copy">Pick a ranked match and let their agents make the first move.</p><Button onClick={onBrowse} className="primary-action" data-testid="date-browse-rankings-button"><BarChart3 size={16} /> Browse compatibility</Button></div>;
-  const currentTurn = session.turns[Math.min(step, session.turns.length - 1)];
-  const isComplete = step >= session.turns.length - 1;
-  return <div className="view-stack date-stage" data-testid="date-theater-view"><section className="date-stage-header" data-testid="date-stage-header"><div><div className="eyebrow"><span className="live-dot inline-dot" /> LIVE AGENT DATE · {session.venue_tag}</div><h1 data-testid="date-stage-title">Let’s see what they find.</h1><p data-testid="date-stage-copy">{session.venue} · your agents are representing you with care.</p></div><div className="chemistry-meter" data-testid="chemistry-meter"><span className="micro-label">CHEMISTRY</span><strong>{Math.min(100, session.turns.slice(0, step + 1).reduce((sum, turn) => sum + turn.chemistry_delta, 0))}%</strong><div className="meter-track"><span style={{ width: `${Math.min(100, session.turns.slice(0, step + 1).reduce((sum, turn) => sum + turn.chemistry_delta, 0))}%` }} /></div></div></section><div className="date-scene" data-testid="date-scene"><div className="scene-glow" /><div className="scene-topline"><span data-testid="date-turn-counter">BEAT {String(step + 1).padStart(2, "0")} / {String(session.turns.length).padStart(2, "0")}</span><span data-testid="date-venue-label">{session.venue}</span></div><div className={`scene-turn ${currentTurn.role === "system" ? "scene-system" : ""}`} data-testid="date-current-turn"><div className="turn-avatar"><Heart size={18} fill="currentColor" /></div><div><div className="micro-label" data-testid="date-current-speaker">{currentTurn.speaker}</div><p data-testid="date-current-message">“{currentTurn.message}”</p></div></div><div className="scene-progress" data-testid="date-scene-progress">{session.turns.map((turn, index) => <span key={`${turn.speaker}-${index}`} className={index <= step ? "progress-on" : ""} />)}</div></div><div className="date-bottom-row" data-testid="date-bottom-row"><div className="date-pair"><CandidateAvatar candidate={session.candidate} size="sm" /><Heart size={13} className="date-heart" fill="currentColor" /><CandidateAvatar candidate={session.match} size="sm" /></div>{isComplete ? <div className="verdict-block" data-testid="date-verdict"><span className="verdict-kicker">THE AGENTS AGREE</span><strong>{session.verdict}</strong><span>{session.chemistry}% reciprocal chemistry</span></div> : <div className="next-beat-copy" data-testid="next-beat-copy">The room is quiet. Their agents are listening.</div>}<Button onClick={() => setStep(Math.min(step + 1, session.turns.length - 1))} disabled={isComplete} className="primary-action" data-testid="date-next-beat-button">{isComplete ? <><CircleCheck size={16} /> Date complete</> : <>Next beat <ChevronRight size={15} /></>}</Button></div></div>;
+function RankingsView({ candidates, selected, setSelected, rankings, onDate, onOpen, dateBusy }: { candidates: AgentCandidate[]; selected: AgentCandidate; setSelected: (id: string) => void; rankings: RankedMatch[]; onDate: (match: AgentCandidate) => void; onOpen: (candidate: AgentCandidate) => void; dateBusy: boolean }) {
+  return <div className="view-stack" data-testid="rankings-view"><section className="page-heading" data-testid="rankings-heading"><div><div className="eyebrow">THE COMPATIBILITY INDEX</div><h1 data-testid="rankings-title">Who fits {selected.name}?</h1><p data-testid="rankings-copy">Profile fit ranks everyone first. Once two agents have actually dated, their date match % takes over.</p></div><div className="select-wrap"><label htmlFor="ranking-person" className="micro-label">RANK FOR</label><select id="ranking-person" value={selected.id} onChange={(event) => setSelected(event.target.value)} data-testid="ranking-person-select">{candidates.map((candidate) => <option key={candidate.id} value={candidate.id}>{candidate.name}</option>)}</select></div></section><div className="ranking-intro" data-testid="ranking-intro"><Sparkles size={18} /><span><strong>{rankings.filter((r) => r.date_match !== null).length} of {rankings.length} matches dated.</strong> Match % = 40% profile fit + 30% each agent's post-date score.</span><Badge variant="outline" data-testid="ranking-method-badge">AGENT METHOD · V1</Badge></div><div className="ranking-list" data-testid="ranking-list">{rankings.map((match) => <div className={`ranking-row ${match.rank === 1 ? "ranking-top" : ""}`} key={match.candidate.id} data-testid={`ranking-row-${match.rank}`}><div className="rank-number" data-testid={`ranking-number-${match.rank}`}>{String(match.rank).padStart(2, "0")}</div><CandidateAvatar candidate={match.candidate} size="sm" /><div className="ranking-person"><strong data-testid={`ranking-name-${match.rank}`}>{match.candidate.name}</strong><span data-testid={`ranking-role-${match.rank}`}>{match.candidate.role}</span><small data-testid={`ranking-reason-${match.rank}`}>{match.reason}</small></div><div className="score-block"><strong data-testid={`ranking-score-${match.rank}`}>{match.score}%</strong><span data-testid={`ranking-score-label-${match.rank}`}>{match.date_match !== null ? "DATE MATCH" : "PROFILE FIT"}</span>{match.date_match !== null && <small className="score-sub" data-testid={`ranking-profile-fit-${match.rank}`}>fit {match.profile_score}%</small>}</div><div className="ranking-actions"><button type="button" onClick={() => onOpen(match.candidate)} className="row-link" data-testid={`ranking-profile-button-${match.rank}`}>Profile</button><Button onClick={() => onDate(match.candidate)} disabled={dateBusy} className="date-button" data-testid={`ranking-date-button-${match.rank}`}><Heart size={14} /> {match.date_match !== null ? "Date again" : "Date their agent"}</Button></div></div>)}</div></div>;
 }
 
 export default function Home() {
@@ -319,8 +291,7 @@ export default function Home() {
   const [profile, setProfile] = useState<AgentCandidate | null>(null);
   const [selectedId, setSelectedId] = useState("seed-01");
   const [addedCandidate, setAddedCandidate] = useState<AgentCandidate | null>(null);
-  const [dateSession, setDateSession] = useState<DateSession | null>(null);
-  const [dateStep, setDateStep] = useState(0);
+  const date = useAgentDate();
   const candidatesQuery = useQuery({ queryKey: ["agents"], queryFn: () => apiGet<AgentCandidate[]>("/agents"), retry: false });
   const candidates = useMemo(() => {
     const base = candidatesQuery.data?.length ? candidatesQuery.data : fallbackCandidates;
@@ -330,19 +301,16 @@ export default function Home() {
   const selected = useMemo(() => candidates.find((candidate) => candidate.id === selectedId) ?? candidates[0], [candidates, selectedId]);
   const rankingsQuery = useQuery({ queryKey: ["rankings", selected?.id], queryFn: () => apiGet<RankedMatch[]>(`/agents/${selected?.id}/rankings`), enabled: Boolean(selected?.id) && view === "rankings", retry: false });
   const rankings = rankingsQuery.data?.length ? rankingsQuery.data : fallbackRankings(selected);
-  const dateMutation = useMutation({ mutationFn: (payload: DateSessionCreate) => apiPost<DateSession>("/agents/dates", payload), onSuccess: (session) => { setDateSession(session); setDateStep(0); setView("date"); toast.success("The agents are on a date."); }, onError: () => toast.error("The date could not start. Pick another match.") });
   const openProfile = (candidate: AgentCandidate) => { setProfile(candidate); setSelectedId(candidate.id); };
   const startDate = (match: AgentCandidate) => {
-    if (selected.id.startsWith("fallback-") || match.id.startsWith("fallback-")) {
-      setDateSession(makeLocalDateSession(selected, match));
-      setDateStep(0);
-      setView("date");
-      return;
-    }
-    dateMutation.mutate({ candidate_id: selected.id, match_id: match.id });
+    if (date.busy) return;
+    date.start(selected, match);
+    setMainView("date");
+    toast.success(`${selected.name}'s agent is heading out with ${match.name}'s agent.`);
   };
+  const restartDate = () => { if (date.state.candidate && date.state.match) date.start(date.state.candidate, date.state.match); };
   const onCreated = (candidate: AgentCandidate) => { setAddedCandidate(candidate); setAddOpen(false); setSelectedId(candidate.id); setProfile(candidate); setView("agents"); };
   const setMainView = (nextView: View) => { setView(nextView); setProfile(null); };
 
-  return <div className="app-shell" data-testid="agentcupid-app"><AppHeader onAdd={() => setAddOpen(true)} /><div className="app-body"><SideNav view={view} setView={setMainView} candidateCount={candidates.length} /><main className="main-content" data-testid="main-content">{view === "overview" && <Overview candidates={candidates} selected={selected} onOpen={openProfile} onAdd={() => setAddOpen(true)} onView={setMainView} />}{view === "agents" && <AgentsView candidates={candidates} onOpen={openProfile} onAdd={() => setAddOpen(true)} />}{view === "rankings" && <RankingsView candidates={candidates} selected={selected} setSelected={setSelectedId} rankings={rankings} onDate={startDate} onOpen={openProfile} />}{view === "date" && <DateTheater session={dateSession} step={dateStep} setStep={setDateStep} onBrowse={() => setMainView("rankings")} />}</main></div>{addOpen && <AddPersonPanel onClose={() => setAddOpen(false)} onCreated={onCreated} />}{profile && <ProfilePanel candidate={profile} onClose={() => setProfile(null)} onRankings={() => { setProfile(null); setMainView("rankings"); }} />}</div>;
+  return <div className="app-shell" data-testid="agentcupid-app"><AppHeader onAdd={() => setAddOpen(true)} /><div className="app-body"><SideNav view={view} setView={setMainView} candidateCount={candidates.length} /><main className="main-content" data-testid="main-content">{view === "overview" && <Overview candidates={candidates} selected={selected} onOpen={openProfile} onAdd={() => setAddOpen(true)} onView={setMainView} />}{view === "agents" && <AgentsView candidates={candidates} onOpen={openProfile} onAdd={() => setAddOpen(true)} />}{view === "rankings" && <RankingsView candidates={candidates} selected={selected} setSelected={setSelectedId} rankings={rankings} onDate={startDate} onOpen={openProfile} dateBusy={date.busy} />}{view === "date" && <DateTheater date={date.state} onBrowse={() => setMainView("rankings")} onRestart={restartDate} />}</main></div>{addOpen && <AddPersonPanel onClose={() => setAddOpen(false)} onCreated={onCreated} />}{profile && <ProfilePanel candidate={profile} onClose={() => setProfile(null)} onRankings={() => { setProfile(null); setMainView("rankings"); }} />}</div>;
 }

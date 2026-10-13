@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from typing import Literal
+from typing import Literal, Optional
 from uuid import uuid4
 
 from pydantic import BaseModel, Field, HttpUrl
@@ -31,7 +31,10 @@ class AgentCandidate(BaseModel):
 class RankedMatch(BaseModel):
     rank: int
     candidate: AgentCandidate
-    score: int
+    score: int  # date match % when the agents have dated, otherwise profile fit
+    profile_score: int
+    date_match: Optional[int] = None
+    date_id: Optional[str] = None
     reason: str
     breakdown: dict[str, int]
 
@@ -42,18 +45,27 @@ class DateSessionCreate(BaseModel):
 
 
 class DateTurn(BaseModel):
+    index: int
+    side: Literal["a", "b"]
     speaker: str
-    role: Literal["agent", "system"]
     message: str
-    chemistry_delta: int = 0
+    vibe: int
 
 
-class DateSession(BaseModel):
-    id: str = Field(default_factory=lambda: str(uuid4()))
-    candidate: AgentCandidate
-    match: AgentCandidate
+class DateRecord(BaseModel):
+    id: str
+    candidate_id: str
+    match_id: str
+    candidate_name: str
+    match_name: str
     venue: str
-    venue_tag: str
-    chemistry: int
+    profile_score: int
+    candidate_agent_score: int
+    match_agent_score: int
+    candidate_agent_reason: str
+    match_agent_reason: str
+    match_percent: int
+    second_date: bool
     verdict: str
     turns: list[DateTurn]
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))

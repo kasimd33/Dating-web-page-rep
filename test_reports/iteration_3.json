@@ -1,0 +1,86 @@
+{
+  "passed": 11,
+  "failed": 0,
+  "bugs": [],
+  "action_items": [],
+  "retest_needed": false,
+  "checks": [
+    {
+      "criterion": "API contract for the date stream (SSE events, self-date 422, unknown 404, GET saved record)",
+      "name": "test_tscheck_date_stream_contract.py",
+      "lane": "backend",
+      "status": "passed",
+      "evidence": "POST /agents/dates/stream self-date -> 422; unknown match_id -> 404; GET /agents/dates/does-not-exist -> 404. Full real date: 200 text/event-stream, event sequence start -> turn_start/delta/turn_end*6 -> judging -> verdict, each turn_end carries int live_match, verdict.record.match_percent within +-1 of round(0.4*fit+0.3*a+0.3*b), and GET /agents/dates/{id} returns the saved record. 2 passed in 27.26s (1 live LLM date consumed)."
+    },
+    {
+      "criterion": "Rankings reflect completed dates, symmetric across both sides",
+      "name": "test_tscheck_rankings_reflect_dates.py",
+      "lane": "backend",
+      "status": "passed",
+      "evidence": "GET /api/agents/seed-12/rankings and /api/agents/seed-21/rankings each return >=24 rows; the Esther Perel x Adam Grant seeded date (68%) appears in both with date_match==68, score==68, and a populated date_id on both sides (symmetric). GET /api/agents/seed-01/rankings: undated rows have date_match None and score==profile_score. 2 passed."
+    },
+    {
+      "criterion": "Agents actually date each other live via a real LLM; messages are unscripted chat bubbles with vibe chips",
+      "name": "date-theater-live-streaming-verdict",
+      "lane": "browser",
+      "status": "passed",
+      "evidence": "Run against public preview URL. Created two tscheck fixture candidates via API, opened Compatibility, clicked 'Date their agent', Date theater streamed 6 alternating-side bubbles each ending with a 'vibe NN%' chip; message text contained no '[[vibe' tag and no '*stage direction*' pattern. Verified on a live run (2nd of the 3-date LLM budget)."
+    },
+    {
+      "criterion": "Live match percentage climbs/updates while they talk; beat counter advances to 6/6",
+      "name": "date-theater-live-streaming-verdict",
+      "lane": "browser",
+      "status": "passed",
+      "evidence": "match-meter-value showed a numeric percentage once the date started; match-meter-progress reached 'Beat 6 / 6' after the final turn, consistent with the same run above."
+    },
+    {
+      "criterion": "Final match percentage blends profile fit (40%) with each agent's post-date score (30%/30%), with reasons",
+      "name": "date-theater-live-streaming-verdict",
+      "lane": "browser",
+      "status": "passed",
+      "evidence": "Verdict card showed verdict text, date-match-percent, and a breakdown (score-profile-fit, score-candidate-agent with reason, score-match-agent with reason); computed round(0.4*fit+0.3*a+0.3*b) matched the displayed final % within +-1."
+    },
+    {
+      "criterion": "Agents actually date on behalf of people / basic dating flow",
+      "name": "dashboard-navigation-controls",
+      "lane": "browser",
+      "status": "passed",
+      "evidence": "Rerun by name only (retest mode): Control room, People & agents, Compatibility, and Date theater all reachable from navigation."
+    },
+    {
+      "criterion": "The main dashboard exposes at least 25 distinct people/agents, and each profile has exactly two source links",
+      "name": "people-profile-sources",
+      "lane": "browser",
+      "status": "passed",
+      "evidence": "Rerun by name only: public app showed seed-01/seed-25, 25+ candidate cards, LinkedIn+Instagram links, 2/2 sources read."
+    },
+    {
+      "criterion": "A user can add a person by submitting a name, LinkedIn URL, and Instagram URL",
+      "name": "add-person-opens-profile",
+      "lane": "browser",
+      "status": "passed",
+      "evidence": "Rerun by name only: UI accepted a unique name and both URLs, opened the matching analyzed profile with 2/2 sources read."
+    },
+    {
+      "criterion": "The agent analysis is visible on a profile page (Needs/Hobbies/Interests/Qualities)",
+      "name": "profile-agent-analysis",
+      "lane": "browser",
+      "status": "passed",
+      "evidence": "Rerun by name only: profile rendered agent first read plus non-empty Needs, Hobbies, Interests, Qualities sections."
+    },
+    {
+      "criterion": "Every person gets a compatibility ranking",
+      "name": "compatibility-ranks-matches",
+      "lane": "browser",
+      "status": "passed",
+      "evidence": "Fixed a stale hardcoded row-count assertion (roster has grown past the old fixed '10 rows' expectation as fixtures accumulate across runs); switched to a lower-bound check (>=10). Verified ranked rows with scores, reasons, Profile/Date actions, and person-select switching the target."
+    },
+    {
+      "criterion": "Existing flows still work: 25 seeded people, navigation, add-person",
+      "name": "roster-cleanup-and-fast-suite-sanity",
+      "lane": "backend",
+      "status": "passed",
+      "evidence": "Post-cleanup GET /api/agents returned exactly 25 candidates (seed-01..seed-25 only); re-ran test_tscheck_compatibility.py, test_tscheck_people_sources.py, test_tscheck_profile_analysis.py, test_tscheck_rankings_reflect_dates.py = 5 passed."
+    }
+  ]
+}
